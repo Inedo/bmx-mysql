@@ -24,6 +24,30 @@ namespace Inedo.BuildMasterExtensions.MySql
         {
             this.ExecuteQuery("SELECT 1");
         }
+
+        public void ExecuteScript(string query, string delimiter)
+        {
+            var connection = this.CreateConnection();
+
+            try
+            {
+                connection.Open();
+
+                var script = new MySqlScript
+                {
+                    Connection = connection,
+                    Delimiter = delimiter,
+                    Query = query,
+
+                };
+                script.Execute();
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
+
         public override void ExecuteQueries(string[] queries)
         {
             using (var cmd = this.CreateCommand(string.Empty))
@@ -41,7 +65,7 @@ namespace Inedo.BuildMasterExtensions.MySql
                 {
                     cmd.Connection.Close();
                 }
-            }       
+            }
         }
         public override void ExecuteQuery(string query)
         {
@@ -108,7 +132,7 @@ namespace Inedo.BuildMasterExtensions.MySql
             var tables = this.ExecuteDataTable("SELECT * FROM __BuildMaster_DbSchemaChanges");
             if (tables.Select("Script_Id=" + scriptId.ToString()).Length > 0)
                 return new ExecutionResult(ExecutionResult.Results.Skipped, scriptName + " already executed.");
-            
+
             Exception ex = null;
             try { this.ExecuteQuery(scriptText); }
             catch (Exception _ex) { ex = _ex; }
